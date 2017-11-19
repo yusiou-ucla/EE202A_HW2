@@ -69,23 +69,21 @@ struct timespec t2;
  * dev - PTP device file
  * channel - Channel index, '1' corresponds to 'TIMER6'
  */
-int init_qot(char* dev, int channel, int ts_gen_s[], long long ts_gen_ns[], int size_ts_gen, long long sec, long long nsec, int fd_m)
+int init_qot(char* dev, int channel, int ts_gen_s, long long ts_gen_ns, long long sec, long long nsec, long long pnsec, int fd_m)
 {
     struct ptp_perout_request perout_request;	/* Programmable interrupt */
-    struct ptp_clock_caps caps;
-    int n;
+    // int n;
 
-    t1.tv_sec = 1;
-    t1.tv_nsec = 0;//500000000;
+    // t1.tv_sec = 1;
+    // t1.tv_nsec = 0;//500000000;
 
-    t2.tv_sec = 0;
-    t2.tv_nsec = nsec;
-
+    // t2.tv_sec = 0;
+    // t2.tv_nsec = nsec;
 
     device_m = dev;                             /* PTP device */
     index_m = channel;                          /* Channel index */
 
-    for(n=0; n<1; n++){
+    // for(n=0; n<1; n++){
     // /* Open the character device */
     // fd_m = open(device_m, O_RDWR);
     // if (fd_m < 0) {
@@ -103,61 +101,31 @@ int init_qot(char* dev, int channel, int ts_gen_s[], long long ts_gen_ns[], int 
         printf("Set pin func failed for %d\n", fd_m);
         return -1;
     }
-    printf("Set pin func successful for %d\n", fd_m);
+    //printf("Set pin func successful for %d\n", fd_m);
 
     
-    // uint64_t nano_ts = (sec * 1000000000) + nsec;
-    // printf("QoT current time: %lld.%09u\n", (long long)sec, (long long)nsec);
-    printf("QoT current time: %lld.%09u\n", sec, nsec);
+    //printf("QoT current time: %lld.%09u\n", sec, nsec);
 
     /* Configure pulse per second to start at deterministic point in future */
     
 
-    memset(&caps, 0, sizeof(caps));
     memset(&perout_request, 0, sizeof(perout_request));
-    //int n;
     int offset = 2;
     
-     // caps.max_adj;    Maximum frequency adjustment in parts per billon. 
-     // caps.n_alarm;   /* Number of programmable alarms. */
-     // caps.n_ext_ts;  /* Number of external time stamp channels. */
-    // caps.n_per_out = 2*size_ts_gen; /* Number of programmable periodic signals. */
-    // if (ioctl(fd_m, PTP_CLOCK_GETCAPS, &caps)){
-    //     perror("PTP_CLOCK_GETCAPS");
-    // }
-
-    
-
         //pulseStart = ((long long)(nano_ts)) + (offset + ts_gen[n]) * 1000000000;
 
         perout_request.index = index_m;
-        perout_request.start.sec = (long long)(sec) + offset + ts_gen_s[n];
-        perout_request.start.nsec = (long long)nsec + ts_gen_ns[n];
+        perout_request.start.sec = (long long)(sec) + offset + ts_gen_s;
+        perout_request.start.nsec = (long long)nsec + ts_gen_ns;
         perout_request.period.sec = 0;
-        perout_request.period.nsec = 100000000; // 100 msecond period, change it to desired value
+        perout_request.period.nsec = pnsec; // 100 msecond period, change it to desired value
 
         if (ioctl(fd_m, PTP_PEROUT_REQUEST, &perout_request)) {
             printf("cannot request periodic output for %d\n", fd_m);
             return -1;
         }
 
-        printf("Output for requested time successful for %d, outputting at %lld.%09u: \n", n, ((long long)(sec)) + offset + ts_gen_s[n], (long long)nsec + ts_gen_ns[n]);
-        nanosleep(&t1, NULL);
-        // // pulseEnd = pulseStart + 25500000;
-        perout_request.start.nsec = (long long)nsec + offset + ts_gen_ns[n] + 100000000;//+ 25500000;
-        perout_request.period.nsec = 999999999; // 1 second period, change it to desired value
-
-        if (ioctl(fd_m, PTP_PEROUT_REQUEST, &perout_request)) {
-            printf("cannot request periodic output for %d\n", fd_m);
-            return -1;
-        }
-        printf("Set output low successful for %d, outputting at %lld.%09u: \n", n, ((long long)(sec)) + offset + ts_gen_s[n], (long long)nsec + ts_gen_ns[n] + 25500000);
-        
-        nanosleep(&t2, NULL);
-
-        //printf("Requesting periodic output success for %d\n", fd_m);
-    }
-    
+        printf("Output for requested time successful, outputting at %d.%09u: \n", offset + ts_gen_s, ts_gen_ns);
 
     return 0;
 }

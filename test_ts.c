@@ -75,6 +75,16 @@ void intHandler(int dummy){
 int main(int argc, char *argv[]){
 
 	signal(SIGINT, intHandler);
+
+//int status;
+system("testptp -d /dev/ptp1 -i 1 -L 1,1 >/dev/null 2>&1");
+system("testptp -d /dev/ptp1 -i 1 -e 100 >/dev/null 2>&1 &");
+system("PID=$!");
+printf("echo PTP flushing process launched at PID $PID.\n");
+system("sleep 1");
+system("kill -TERM $PID");
+printf("echo PTP queue flushed.\n");
+
     //signal(SIGTERM, intHandler);
 
 	//Array events;
