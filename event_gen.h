@@ -13,8 +13,8 @@
 
 #include <stdint.h>
 
-int init_event_gen(char* dev, int channel);//, double diff1, double diff2);
-int deinit_event_gen();
+int init_qot(char* dev, int channel, int ts_gen_s[], long long ts_gen_ns[], int size_ts_gen, long long sec, long long nsec, int fd_m);//, double diff1, double diff2);
+int deinit_qot(int fd_m);
 //uint64_t qot_read_event_ts(int* err);
 
 #endif

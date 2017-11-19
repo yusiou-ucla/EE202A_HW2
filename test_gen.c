@@ -26,80 +26,106 @@
 #define ADJ_SETOFFSET 0x0100
 #endif
 
+#define FD_TO_CLOCKID(fd) ((~(clockid_t) (fd) << 3) | 3)
 #ifndef CLOCK_INVALID
 #define CLOCK_INVALID -1
 #endif
 
+int running = 1;
+clockid_t clkid_m; 	    /* Clock ids */
+struct timespec ts;				/* Time storage */
+int fd_m;                   /* device file descriptor */
+
+
+void exit_handler(int s)
+{
+	printf("Exit requested \n");
+  	running = 0;
+}
+
 int main(int argc, char *argv[]){
 
+	    /* Open the character device */
+    fd_m = open("/dev/ptp1", O_RDWR);
+    if (fd_m < 0) {
+        fprintf(stderr, "opening device %s: %s\n",
+                "/dev/ptp1", strerror(errno));
+        return -1;
+    }
+    printf("Device opened %d\n", fd_m);
 
-	//text parsing variables
-	char str[20];
-	double ts_gen[5] = {0.0}; //3 timestamp slots
-	int i = 0; // iterator for ts slots
-	int n = 0;
-	int gen_channel = 2;
-   int end = 0;
-	//my code
-	//int dev = init_qot(DEVICE, 1);
-	//uint64_t nano_ts = qot_read_event_ts(&err);
+	clkid_m = FD_TO_CLOCKID(fd_m);
+    if (CLOCK_INVALID == clkid_m) {
+	printf("failed to read clock id for %d\n", fd_m);
+	return -1;
+    }
+    printf("clock id is %lld\n", clkid_m);
 
-	FILE * file;
-	file = fopen( argv[1] , "r");
+    /* Get the clock current time */
+    if (clock_gettime(clkid_m, &ts)) {
+	printf("clock_gettime failed for %d\n",fd_m);
+	return -1;
+    }
 
-	if(file == NULL) {
+      //text parsing variables
+      char str[20];
+      //double ts_gen[5] = {0.0}; //3 timestamp slots
+      int i = 0; // iterator for ts slots
+      int n = 0;
+      int gen_channel = 2;
+      int end = 0;
+      //my code
+      //int dev = init_qot(DEVICE, 1);
+      //uint64_t nano_ts = qot_read_event_ts(&err);
+
+      FILE * file;
+      file = fopen( argv[1] , "r");
+
+      if(file == NULL) {
       perror("Error opening file");
       return(-1);
-   }
-   int c;
-   while(!end){
-      //line by line
+      }
 
-      i=0;
-      //character by character
-      do {
-         c = fgetc(file);
-         if(feof(file)) {
-            end = 1;
-            printf("Breaking %d", i);
-            break ;
-         }
-         if(c == '\n') {
-            printf("Newline %d", i);
-            break ;
-         }
-         //printf("%c", c);
-         str[i] = c;
-         i++;
-      } while(1);
-         printf("string: %s\n", str);
-         ts_gen[n] = atof(str);
-         printf("%d, %1.9f\n", n, ts_gen[n]);
-         n++;
-   }
+      double ts_gen[150];
 
+      while (fgets(str, 13, file)){
+      		ts_gen[i] = atof(str);
+      		printf("string: %s", str);
+      		printf("double: %f\n", ts_gen[i]);
+      		i++;
+      }
+      
+      int j;
+      int ts_gen_s[i];
+      long long ts_gen_ns[i];
 
+      for (j=0; j<i; j++){
+            ts_gen_s[j] = (int) ts_gen[j];
+            //printf("Doublevalue: %9.9f\n", ts_gen[j]);
+            printf("Seconds: %d\n", ts_gen_s[j]);
+            //printf("%1.9f\n", ts_gen[j] - (double) ts_gen_s[j]);
+            //printf("%9.9f\n", (ts_gen[j] - (double) ts_gen_s[j])* 1000000000);
+            ts_gen_ns[j] = (long long) ((ts_gen[j] - (double) ts_gen_s[j]) * 1000000000);
+            printf("Nanoseconds: %lld\n", ts_gen_ns[j]);
+      }
 
+      if (init_qot("/dev/ptp1", gen_channel, ts_gen_s, ts_gen_ns, i, (long long)ts.tv_sec, (long long)ts.tv_nsec, fd_m)) { // index=2 corresponds to TIMER7
+            printf("Initialize QoT failed\n");
+            deinit_qot(fd_m);
+            exit(EXIT_FAILURE);
+      }
 
-   	// while(fgets(str, 20, file)!=NULL){
-    //      printf("Take %d\n", i);
-   	// 	printf("string: %s", str);
+      signal(SIGINT, exit_handler);
+      signal(SIGTERM, exit_handler);
 
+      while (running) 
+      {
+      usleep(10000);
+      }
+      
+      if (deinit_qot(fd_m)) {
+            printf("Deinitialize QoT failed\n");
+      }
 
-    //      printf(feof(stdin))
-
-   	// 	// ts_gen[i] = atof(str);
-   	// 	// printf("%d, %1.9f\n", i, ts_gen[i]);
-   	// 	i++;
-   		
-   //}
-
-   //double diff_1 = ts_gen[2] - ts_gen[0];
-   //double diff_2 = ts_gen[4] - ts_gen[2];
-
-   init_event_gen(DEVICE,gen_channel);//,diff_1,diff_2);
-
-   deinit_event_gen();
-
-   return 0;
+      return(EXIT_SUCCESS);
 }
