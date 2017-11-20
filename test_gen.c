@@ -122,7 +122,7 @@ int main(int argc, char *argv[]){
             ts_gen_ns[j] = (long long) ((ts_gen[j] - (double) ts_gen_s[j]) * 1000000000);
             //printf("Nanoseconds: %lld\n", ts_gen_ns[j]);
             long long perOut = 90000000;
-            long long perWait = 80000000;
+            long long perWait = 90000000;
 
           if (init_qot("/dev/ptp1", gen_channel, ts_gen_s[j], ts_gen_ns[j], ts.tv_sec, ts.tv_nsec, perOut, fd_m)) { // index=2 corresponds to TIMER7
             printf("Initialize QoT failed\n");

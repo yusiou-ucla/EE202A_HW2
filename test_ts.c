@@ -76,14 +76,14 @@ int main(int argc, char *argv[]){
 
 	signal(SIGINT, intHandler);
 
-//int status;
-system("testptp -d /dev/ptp1 -i 1 -L 1,1 >/dev/null 2>&1");
-system("testptp -d /dev/ptp1 -i 1 -e 100 >/dev/null 2>&1 &");
-system("PID=$!");
-printf("echo PTP flushing process launched at PID $PID.\n");
-system("sleep 1");
-system("kill -TERM $PID");
-printf("echo PTP queue flushed.\n");
+// //int status;
+// system("testptp -d /dev/ptp1 -i 1 -L 1,1 >/dev/null 2>&1");
+// system("testptp -d /dev/ptp1 -i 1 -e 100 >/dev/null 2>&1 &");
+// system("PID=$!");
+// printf("echo PTP flushing process launched at PID $PID.\n");
+// system("sleep 1");
+// system("kill -TERM $PID");
+// printf("echo PTP queue flushed.\n");
 
     //signal(SIGTERM, intHandler);
 
@@ -121,7 +121,7 @@ printf("echo PTP queue flushed.\n");
 				//printf("%d, Inserting into array\n", i);
 				//insertArray(&events, nano_ts);
 				events[i] = nano_ts;
-				//printf("%"PRIu64"\n", nano_ts);
+				printf("%"PRIu64"\n", nano_ts);
 
 				i++;
 			}
@@ -136,24 +136,58 @@ printf("echo PTP queue flushed.\n");
 	int x = 0;
 	//ptr = test;
 	//prev_ts = 0.0;
-	//fprintf(file, "0.000000000\n"); //first timestamp is always 0
-	while(x<i){
-		//fprintf(file, "%9.9f\n", (double)((events.array[x] - events.array[0])/1000000000.0));
-		fprintf(file, "%9.9f\n", (double)((events[x] - events[0])/1000000000.0));
+	// int n;
 
-		//prev_ts = (double)(events.array[x+1] - events.array[x])/1000000000.0;
-		//fprintf(file, "%"PRIu64"\n", *(ptr+ 1) - *(ptr));
-		//fprintf(file, "%"PRIu64"\n", events.array[x++]);  // print xth element
-		x++;
+	// for (n=0; n<i; n++){
+	// 	fprintf(file, "event %d, %"PRIu64"\n", n, events[n]);
+	// }
+	// //fprintf(file, "0.000000000\n"); //first timestamp is always 0
+	// while(x<i){
+
+	// 	if ((events[1]-events[0])<1000000000){
+	// 	//fprintf(file, "%9.9f\n", (double)((events.array[x] - events.array[0])/1000000000.0));
+	// 	fprintf(file, "%9.9f\n", (double)((events[x] - events[0])/1000000000.0));
+	// } else {
+	// 	fprintf(file, "%9.9f\n", (double)((events[x] - events[1])/1000000000.0));
+	// }
+	// 	//prev_ts = (double)(events.array[x+1] - events.array[x])/1000000000.0;
+	// 	//fprintf(file, "%"PRIu64"\n", *(ptr+ 1) - *(ptr));
+	// 	//fprintf(file, "%"PRIu64"\n", events.array[x++]);  // print xth element
+	// 	x++;
+	// }
+
+	double events_temp[i];
+	int flushFlag;
+
+	while(x<i){
+
+		if ((events[1]-events[0])<1000000000){
+		//fprintf(file, "%9.9f\n", (double)((events.array[x] - events.array[0])/1000000000.0));
+		events_temp[x] = (double)((events[x] - events[0])/1000000000.0);
+		flushFlag = 0;
+		printf("events_temp: %9.9f\n", events_temp[x]);
+		} else {
+		events_temp[x] = (double)((events[x] - events[1])/1000000000.0);
+		flushFlag = 1;
+		printf("events_temp: %9.9f\n", events_temp[x]);
+	}
+	x++;
 	}
 
+	printf("number of events captured: %d\n", i);
+
+	int j;
+
+	for (j=flushFlag; j<i; j++){
+		fprintf(file, "event number: %d, %9.9f\n", j, events_temp[j]);
+	}
 	//freeArray(&events);
+	
 	deinit_qot();
 
 	// printf("%"PRIu64"\n", test[1]-test[0]);
 	// double num = (double)(test[1]-test[0]);
 	// num = num/1000000000.0;
 	// printf("%9.9f\n", num);
-
-return 0;
+	return 0;
 }
