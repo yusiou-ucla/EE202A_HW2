@@ -124,7 +124,9 @@ int init_qot(char* dev, int channel, int ts_gen_s, long long ts_gen_ns, long lon
             printf("cannot request periodic output for %d\n", fd_m);
             return -1;
         }
-
+        // if (pnsec != 0){
+        // printf("%d.%09u \n", offset + ts_gen_s, ts_gen_ns);
+        // }
         printf("Output for requested time successful, outputting at %d.%09u: \n", offset + ts_gen_s, ts_gen_ns);
 
     return 0;

@@ -36,6 +36,7 @@ clockid_t clkid_m; 	    /* Clock ids */
 struct timespec ts;				/* Time storage */
 int fd_m;                   /* device file descriptor */
 struct timespec tswait;
+struct timespec rsttime;
 
 void exit_handler(int s)
 {
@@ -61,6 +62,9 @@ int main(int argc, char *argv[]){
     }
     printf("clock id is %lld\n", clkid_m);
 
+    rsttime.tv_sec = 0;
+    rsttime.tv_nsec = 0;//500000000;
+    int status = clock_settime(clkid_m, &rsttime);
     /* Get the clock current time */
     if (clock_gettime(clkid_m, &ts)) {
 	printf("clock_gettime failed for %d\n",fd_m);
@@ -88,7 +92,7 @@ int main(int argc, char *argv[]){
 
       double ts_gen[150];
 
-      while (fgets(str, 13, file)){
+      while (fgets(str, 20, file)){
       		ts_gen[i] = atof(str);
       		//printf("string: %s", str);
           //printf("conversion: %lf\n", atof(str));
@@ -100,20 +104,25 @@ int main(int argc, char *argv[]){
       //   printf("double: %f\n", ts_gen[y]);
       // }
       
+      printf("Number of events to be requested: %d\n", i);
       int j;
       int ts_gen_s[i];
       long long ts_gen_ns[i];
 
+
+      // while (running) 
+      // {
+
       for (j=0; j<i; j++){
-            ts_gen_s[j] = (int) ts_gen[j];
+            ts_gen_s[j] = ts_gen[j];
             //printf("Doublevalue: %9.9f\n", ts_gen[j]);
-            printf("Seconds: %d\n", ts_gen_s[j]);
+            //printf("Seconds: %2.2d\n", ts_gen_s[j]);
             //printf("%1.9f\n", ts_gen[j] - (double) ts_gen_s[j]);
             //printf("%9.9f\n", (ts_gen[j] - (double) ts_gen_s[j])* 1000000000);
             ts_gen_ns[j] = (long long) ((ts_gen[j] - (double) ts_gen_s[j]) * 1000000000);
             //printf("Nanoseconds: %lld\n", ts_gen_ns[j]);
-            long long perOut = 50000000;
-            long long perWait = 45000000;
+            long long perOut = 90000000;
+            long long perWait = 80000000;
 
           if (init_qot("/dev/ptp1", gen_channel, ts_gen_s[j], ts_gen_ns[j], ts.tv_sec, ts.tv_nsec, perOut, fd_m)) { // index=2 corresponds to TIMER7
             printf("Initialize QoT failed\n");
@@ -123,11 +132,9 @@ int main(int argc, char *argv[]){
           }
           //busywait
 
-
             uint64_t pulse_time = ((long long)(ts.tv_sec + ts_gen_s[j] + 2) * 1000000000) + ts.tv_nsec + ts_gen_ns[j] + perWait;
-            printf("Pulse time: %" PRIu64 "\n", pulse_time);
-            //printf("Pulse time: %lld.%09u\n", ((long long)(ts.tv_sec + ts_gen_s[j] + 2) * 1000000000), ts.tv_nsec + ts_gen_ns[j] + perWait);
-
+            //printf("ts_gen_s: %d\n", ts_gen_s[j]);
+            //printf("Pulse time: %" PRIu64 "\n", pulse_time);
 
             uint64_t wait_time;
           do{
@@ -135,13 +142,11 @@ int main(int argc, char *argv[]){
                 printf("clock_gettime failed for %d\n",fd_m);
                 return -1;
               }
-              wait_time =  ((long long)tswait.tv_sec * 1000000000) + (long long) tswait.tv_nsec;
+              wait_time = ((long long)tswait.tv_sec * 1000000000) + (long long) tswait.tv_nsec;
               //printf("Wait time: %" PRIu64 "\n", wait_time);
-              //printf("Wait time: %lld.%09u\n", (long long)tswait.tv_sec, (long long)tswait.tv_nsec);
-
 
           } while( wait_time < pulse_time);
-            printf("Wait time:  %" PRIu64 "\n", wait_time);
+            //printf("Wait time:  %" PRIu64 "\n", wait_time);
             if (init_qot("/dev/ptp1", gen_channel, ts_gen_s[j], ts_gen_ns[j] + perWait, ts.tv_sec, ts.tv_nsec, 0, fd_m)) { // index=2 corresponds to TIMER7
             printf("Initialize QoT failed\n");
             deinit_qot(fd_m);
@@ -149,17 +154,12 @@ int main(int argc, char *argv[]){
 
           }
 
-          
-
-      }
+      // }
 
 
       signal(SIGINT, exit_handler);
       signal(SIGTERM, exit_handler);
 
-      while (running) 
-      {
-      usleep(10000);
       }
       
       if (deinit_qot(fd_m)) {
