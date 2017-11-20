@@ -121,7 +121,7 @@ int main(int argc, char *argv[]){
 				//printf("%d, Inserting into array\n", i);
 				//insertArray(&events, nano_ts);
 				events[i] = nano_ts;
-				printf("%"PRIu64"\n", nano_ts);
+				//printf("%"PRIu64"\n", nano_ts);
 
 				i++;
 			}
@@ -175,11 +175,18 @@ int main(int argc, char *argv[]){
 	}
 
 	printf("number of events captured: %d\n", i);
+	
+
+	double events_cal [100];
 
 	int j;
 
+	double calOffset = 0.000009;
+
 	for (j=flushFlag; j<i; j++){
-		fprintf(file, "event number: %d, %9.9f\n", j, events_temp[j]);
+		events_cal[j-flushFlag] = events_temp[j] - (double)(j-flushFlag) * calOffset;
+		printf("Offset: %9.9f\n", (double)(j-flushFlag) * calOffset);
+		fprintf(file, "%9.9f\n", events_cal[j-flushFlag]);
 	}
 	//freeArray(&events);
 	

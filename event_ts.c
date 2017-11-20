@@ -179,7 +179,7 @@ qot_read_event_ts(int* err)
         nano_ts = event.t.sec * 1000000000;
         nano_ts += event.t.nsec;
 
-        printf("QoT event time: %llu ns\n", nano_ts);
+        //printf("QoT event time: %llu ns\n", nano_ts);
 
     }
     return nano_ts;
