@@ -1,0 +1,24 @@
+{
+    "remotePath": "./HW2",
+    "host": "192.168.7.2",
+    "username": "root",
+    "password": "",
+    "port": 22,
+    "secure": false,
+    "protocol": "sftp",
+    "uploadOnSave": true,
+    "passive": false,
+    "debug": false,
+    "privateKeyPath": null,
+    "passphrase": null,
+    "ignore": [
+        "\\.vscode",
+        "\\.git",
+        "\\.DS_Store"
+    ],
+    "generatedFiles": {
+        "uploadOnSave": true,
+        "extensionsToInclude": [],
+        "path": "/Users/Yusi/Documents/EE202A/HW2"
+    }
+}
